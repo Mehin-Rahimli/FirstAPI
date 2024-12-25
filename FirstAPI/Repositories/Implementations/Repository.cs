@@ -1,44 +1,88 @@
 ﻿using FirstAPI.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using System.Linq.Expressions;
 
 namespace FirstAPI.Repositories.Implementations
 {
-    public class Repository : IRepository
+    public class Repository<T> : IRepository<T> where T : BaseEntity, new()
     {
         private readonly AppDbContext _context;
-
+        private readonly DbSet<T> _table;
 
         public Repository(AppDbContext context)
         {
             _context = context;
-          
+            _table = context.Set<T>();
+
         }
 
        
-        public IQueryable<Category> GetAll()
+        public IQueryable<T> GetAll(
+            Expression<Func<T,bool>>? expression=null,
+            Expression<Func<T, object>>? orderExpression=null,
+            int skip=0,
+            //int take=int.MaxValue, 
+            int take=0,
+            bool isDescending=false,
+            bool isTracking=false,
+            params string[]? includes
+
+            
+            )
         {
-            return _context.Categories;
+            IQueryable<T>query=_table;
+
+            if(expression != null)  query = query.Where(expression);
+
+            if (includes != null)
+            {
+                for(int i = 0; i < includes.Length; i++)
+                {
+                    query=query.Include(includes[i]);
+                }
+            }
+
+
+            if (orderExpression != null)
+              query=isDescending?query.OrderByDescending(orderExpression) :query.OrderBy(orderExpression);
+                
+
+            query=query.Skip(skip);
+            if(take!=0) query=query.Take(take);
+                //if (isDescending)
+                //{
+                //    query = query.OrderByDescending(orderExpression);
+                //}
+                //else
+                //{
+                //    query = query.OrderBy(orderExpression);
+                //}
+            
+
+            return isTracking?query:query.AsNoTracking();
+            
         }
 
-        public async Task<Category> GetByIdAsync(int id)
+        public async Task<T> GetByIdAsync(int id)
         {
-            return await _context.Categories.FirstOrDefaultAsync(c => c.Id == id);
+            return await _table.FirstOrDefaultAsync(x=> x.Id == id);
         }
 
-        public async Task AddAsync(Category category)
+        public async Task AddAsync(T entity)
         {
-            await _context.Categories.AddAsync(category);
+            await _table.AddAsync(entity);
         }
 
-        public async void Delete(Category category)
+        public async void Delete(T entity)
         {
-             _context.Categories.Remove(category);
+            _table.Remove(entity);
         }
 
 
-        public void Update(Category category)
+        public void Update(T entity)
         {
-            _context.Categories.Update(category);
+            _table.Update(entity);
         }
 
         public async Task<int> SaveChangesAsync()

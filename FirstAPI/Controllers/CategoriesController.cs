@@ -12,9 +12,9 @@ namespace FirstAPI.Controllers
     public class CategoriesController : ControllerBase
     {
        
-        private readonly IRepository _repository;
+        private readonly ICategoryRepository _repository;
 
-        public CategoriesController(IRepository repository)
+        public CategoriesController(ICategoryRepository repository)
         {
            
             _repository = repository;
@@ -24,7 +24,11 @@ namespace FirstAPI.Controllers
         public async Task<IActionResult> Get(int page=1,int take=3)
         {
 
-           var categories=await _repository.GetAll().ToListAsync();
+          // var categories=await _repository.GetAll(c=>c.Name.Contains("Gul")).ToListAsync();
+           
+            int skipValue=(page-1)*take;
+            var categories = await _repository.GetAll(c=>c.Name.Contains("Test"),c=>c.Name,skipValue,take,true,true,"Products").ToListAsync();
+
             return Ok(categories);
         }
 
