@@ -26,47 +26,36 @@ namespace FirstAPI.Repositories.Implementations
             int take=0,
             bool isDescending=false,
             bool isTracking=false,
-            params string[]? includes
-
-            
+            params string[]? includes            
             )
         {
             IQueryable<T>query=_table;
 
             if(expression != null)  query = query.Where(expression);
 
-            if (includes != null)
-            {
-                for(int i = 0; i < includes.Length; i++)
-                {
-                    query=query.Include(includes[i]);
-                }
-            }
-
-
-            if (orderExpression != null)
+            if (includes != null) query=_getIncludes(query, includes);
+          
+                
+                
+                
+                if (orderExpression != null)
               query=isDescending?query.OrderByDescending(orderExpression) :query.OrderBy(orderExpression);
                 
 
             query=query.Skip(skip);
             if(take!=0) query=query.Take(take);
-                //if (isDescending)
-                //{
-                //    query = query.OrderByDescending(orderExpression);
-                //}
-                //else
-                //{
-                //    query = query.OrderBy(orderExpression);
-                //}
-            
-
+               
             return isTracking?query:query.AsNoTracking();
             
         }
 
-        public async Task<T> GetByIdAsync(int id)
+        public async Task<T> GetByIdAsync(int id,params string[] includes)
         {
-            return await _table.FirstOrDefaultAsync(x=> x.Id == id);
+            IQueryable<T>query=_table;
+            if (includes != null)
+           query=_getIncludes(query,includes);
+
+            return await query.FirstOrDefaultAsync(x=> x.Id == id);
         }
 
         public async Task AddAsync(T entity)
@@ -88,6 +77,20 @@ namespace FirstAPI.Repositories.Implementations
         public async Task<int> SaveChangesAsync()
         {
          return await _context.SaveChangesAsync();   
+        }
+
+        private IQueryable<T> _getIncludes(IQueryable<T>query,params string[]includes)
+        {
+                for (int i = 0; i < includes.Length; i++)
+                {
+                    query = query.Include(includes[i]);
+                }
+                return query;
+        }
+
+        public Task<bool> AnyAsync(Expression<Func<T, bool>> expression)
+        {
+            return _table.AnyAsync(expression);
         }
     }
 }

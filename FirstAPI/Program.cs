@@ -2,6 +2,8 @@
 using FirstAPI.DAL;
 using FirstAPI.Repositories.Implementations;
 using FirstAPI.Repositories.Interfaces;
+using FirstAPI.Services.Implementations;
+using FirstAPI.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 
@@ -26,6 +28,11 @@ namespace FirstAPI
 
             builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
             builder.Services.AddScoped<IProductRepository, ProductRepository>();
+            builder.Services.AddScoped<ICategoryService,CategoryService>();
+            builder.Services.AddScoped<IColorService, ColorService>();
+            builder.Services.AddScoped<IColorRepository, ColorRepository>();
+
+
 
 
 
